@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <style>
+            table {
+                width: 100%;
+                height: 100%;
+            }
+
+            .textAreaWrapper {
+                width: 100%;
+                height: 80vh;
+            }
+
+            textarea {
+                width: 80%;
+                height: 95%;
+            }
+        </style>
+    </head>
+    <body>
+        <table>
+            <tr>
+                <td>
+                    <div>
+                        <label>Enter code here</label>
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <label>Symbolic Substitution</label>
+                        <br>
+                        <br>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="textAreaWrapper">
+                        <textarea id="codePlaceholder" title="Enter code here"></textarea>
+                    </div>
+                </td>
+                <td>
+                    <div class="textAreaWrapper">
+                        <code style="white-space:pre;" id="parsedCode" title="Parse code"></code>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Input vector:
+                    <div>
+                        <textarea id="inputVector">
+                        </textarea>
+                        <button id="codeSubmissionButton">Parse code</button>
+                    </div>
+                </td>
+                <td>
+                </td>
+            </tr>
+        </table>
+
+        <script src="dist/bundle.js"></script>
+    </body>
+</html>
