@@ -37,8 +37,10 @@ let type_to_function_handler = {
     'IfStatement': if_handler,
     'ReturnStatement': return_handler,
     'ExpressionStatement': expression_handler,
-    'WhileStatement': while_handler
-
+    'WhileStatement': while_handler,
+    'ArrayExpression': array_handler,
+    'AssignmentExpression': assignment_handler,
+    'MemberExpression': member_handler,
 };
 
 function symbolic_substitution(parsed_code){
@@ -104,16 +106,13 @@ function binary_handler(parsed_code){
 function literal_handler(parsed_code){
     return parsed_code.value;
 }
-function identifier_handler(parsed_code){
+function identifier_handler(parsed_code, value = true){
     let id = parsed_code.name;
-    for(let x of local_vars[counter]){
-        if(x.key === id)
-            return x.value;
+    let variable = local_vars[counter].filter(x=>x.key==id)[0];
+    if(variable!=undefined){
+        return value == true ? variable.value :variable.key;
     }
-    for(let x of input_vector[counter]){
-        if(x.key === id)
-            return x.key;
-    }
+    return input_vector[counter].filter(x=>x.key==id)[0].key;
 }
 
 function if_handler(parsed_code, type = 'if', green=false){
@@ -192,26 +191,14 @@ function is_green(test_left,test_right,operator){
 
 
 function expression_handler(parsed_code){
-    let id = parsed_code.expression.left.name;
-    let tab = parsed_code.loc.start.column;
-    for(let x of local_vars[counter]){
-        if(x.key === id){
-            x.value = type_to_function_handler[parsed_code.expression.right.type](parsed_code.expression.right);
-            return;
-        }
-    }
-    for(let x of input_vector[counter]) {
-        if (x.key === id){
-            x.value = type_to_function_handler[parsed_code.expression.right.type](parsed_code.expression.right);
-            ss_code+= ' '.repeat(tab) + x.key + '=' + x.value + '\n';
-        }
-    }
+    type_to_function_handler[parsed_code.expression.type](parsed_code.expression);
+
 }
 
 function return_handler(parsed_code){
     let tab = parsed_code.loc.start.column;
-    let line = type_to_function_handler[parsed_code.argument.type](parsed_code.argument);
-    ss_code += ' '.repeat(tab) + 'return ' + line + ';\n';
+    let id = type_to_function_handler[parsed_code.argument.type](parsed_code.argument);
+    ss_code += ' '.repeat(tab) + 'return ' + id + ';\n';
 }
 
 function while_handler(parsed_code){
@@ -224,7 +211,44 @@ function while_handler(parsed_code){
     ss_code += ' '.repeat(tab) + '}\n';
 }
 
+function array_handler(parsed_code){
+    let arr = [];
+    parsed_code.elements.forEach(function (elem) {
+        arr.push(type_to_function_handler[elem.type](elem));
+    });
+    return arr;
+}
 
+function assignment_handler(parsed_code){
+    let id = type_to_function_handler[parsed_code.left.type](parsed_code.left, false);
+    let variable;
+    let equal_to = type_to_function_handler[parsed_code.right.type](parsed_code.right);
+    let input_vector_assign = false;
+    if(id.length > 1){ //array expression
+        let arr_name = id[0];
+        let arr_idx = id[1];
+        variable = input_vector[counter].filter(x=>x.key==arr_name)[0];
+        if(variable != undefined) input_vector_assign = true;
+        else variable = local_vars[counter].filter(x=>x.key==arr_name)[0] ;
+        variable.value[arr_idx] = equal_to; id = arr_name + '[' + arr_idx + ']';
+    }
+    else{
+        variable = input_vector[counter].filter(x=>x.key==id)[0];
+        if(variable != undefined) input_vector_assign = true;
+        else variable = local_vars[counter].filter(x=>x.key==id)[0]; variable.value = equal_to;
+    }
+    if(input_vector_assign)ss_code += ' '.repeat(parsed_code.loc.start.column) + id + ' = ' + equal_to +';\n';
+}
+function member_handler(parsed_code, value = true){
+    let arr_id = parsed_code.object.name;
+    let ele_idx = type_to_function_handler[parsed_code.property.type](parsed_code.property);
+    if(!value){
+        return [arr_id, ele_idx];
+    }
+    let arr_obj = input_vector[counter].filter(x=>x.key==arr_id)[0];
+    arr_obj = arr_obj === undefined ? local_vars[counter].filter(x=>x.key==arr_id)[0] : arr_obj;
+    return arr_obj.value[ele_idx];
+}
 
 export {parseCode};
 

@@ -37,7 +37,7 @@ describe('The javascript parser', () => {
             {key: 'x', value: 1},            {key: 'y', value: 2},            {key: 'z', value: 3}] ;
         assert.equal(
             parseCode(code,inp_vector)[1],
-            'function foo(x, y, z){\n    while((x+1) < z){\n        z=(((x+1)+((x+1)+y))*2)\n    }\n    return z;\n}\n'
+            'function foo(x, y, z){\n    while((x+1) < z){\n        z = (((x+1)+((x+1)+y))*2);\n    }\n    return z;\n}\n'
         );
     });
 
@@ -127,26 +127,27 @@ describe('The javascript parser', () => {
 describe('The javascript parser', () => {
     it('simple func', () => {
         let code = 'function foo(x){\n' +
-            '    let x = 3;\n' +
+            '    let c = 3;\n' +
             '    return x + 5;\n' +
             '}';
         let inp_vector = [{key: 'x', value: 5}];
         assert.equal(
             parseCode(code, inp_vector)[1],
-            'function foo(x){\n    return (3+5);\n}\n'
+            'function foo(x){\n    return (x+5);\n}\n'
         );
     });
 });
 
 describe('The javascript parser', () => {
     it('simple func', () => {
-        let code = 'function foo(x){\n' +
-            '    return x;' +
+        let code = 'function foo(){\n' +
+            '    let y = 4;\n' +
+            '    return y;\n' +
             '}';
         let inp_vector = [{key: 'x', value: 5}];
         assert.equal(
             parseCode(code, inp_vector)[1],
-            'function foo(x){\n    return x;\n}\n'
+            'function foo(){\n    return 4;\n}\n'
         );
     });
 });
@@ -162,6 +163,53 @@ describe('The javascript parser', () => {
         assert.equal(
             parseCode(code, inp_vector)[1],
             'let z = 5;\nfunction foo(x){\n    return (x+z);\n}\n'
+        );
+    });
+});
+
+describe('The javascript parser', () => {
+    it('arrays', () => {
+        let code = 'function foo(){\n' +
+            '    let arr = [1,4,5,6];\n' +
+            '    if(arr[3] < 5){\n' +
+            '        return 5;\n' +
+            '    }\n' +
+            '    return arr[3];\n' +
+            '}';
+        let inp_vector = [];
+        assert.equal(
+            parseCode(code, inp_vector)[1],
+            'function foo(){\n    if(6 < 5){\n        return 5;\n    }\n    return 6;\n}\n'
+        );
+    });
+});
+
+describe('The javascript parser', () => {
+    it('arrays', () => {
+        let code = 'function foo(){\n' +
+            '    let arr = [1,4,5,6];\n' +
+            '    arr[0] = arr[3]\n' +
+            '    return arr;\n' +
+            '}';
+        let inp_vector = [];
+        assert.equal(
+            parseCode(code, inp_vector)[1],
+            'function foo(){\n    return 6,4,5,6;\n}\n'
+        );
+    });
+});
+
+describe('The javascript parser', () => {
+    it('global array', () => {
+        let code = 'let arr = [1,4,5,6];\n' +
+            'function foo(){  \n' +
+            '    arr[0] = arr[3]\n' +
+            '    return arr;\n' +
+            '}';
+        let inp_vector = [];
+        assert.equal(
+            parseCode(code, inp_vector)[1],
+            'let arr = 1,4,5,6;\nfunction foo(){\n    arr[0] = 6;\n    return arr;\n}\n'
         );
     });
 });
